@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Cleaner App</title>
+<!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+
+<style>
+body {
+    background-color: #121212;
+    color: #e4e4e4;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+}
+
+.container {
+    width: 85%;
+    margin: auto;
+    padding: 20px;
+}
+
+h2, h3 {
+    color: #ffffff;
+}
+
+form {
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+input, select, button {
+    padding: 8px;
+    margin-top: 5px;
+    border-radius: 5px;
+    border: none;
+}
+
+button {
+    background: #2d7ef7;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1a5edb;
+}
+
+table {
+    background: white;
+    color: black;
+    border-collapse: collapse;
+}
+
+footer {
+    text-align: center;
+    padding: 15px;
+    background: #0a0a0a;
+    color: #888;
+    position: relative;
+    width: 100%;
+    font-size: 14px;
+}
+
+.card {
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.success-message {
+    background: #1f7a1f;
+    color: white;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.switches label {
+    display: block;
+    margin: 8px 0;
+    cursor: pointer;
+}
+
+.preview-container {
+    display: none;
+}
+
+/* Modal CSS */
+.about-btn-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.about-btn {
+    background: #2d7ef7;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e1e1e;
+    color: #e4e4e4;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 0 10px #000;
+    z-index: 1000;
+    text-align: center;
+}
+
+.modal img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin-bottom: 15px;
+}
+
+.modal h3 {
+    margin: 10px 0;
+}
+
+.modal a {
+    color: #2d7ef7;
+    text-decoration: none;
+    margin: 0 5px;
+}
+
+.modal a:hover {
+    text-decoration: underline;
+}
+
+.modal-close-container {
+    margin-top: 15px;
+}
+
+.modal-close {
+    background: #ff4b5c;
+    color: white;
+    padding: 5px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Data Cleaner App</h2>
+
+    {% if message %}
+    <div class="success-message">{{ message }}</div>
+    {% endif %}
+
+    <!-- File Upload -->
+    <form method="POST" enctype="multipart/form-data">
+        <label for="file">Choose data file:</label><br>
+        <input id="file" type="file" name="file" required><br><br>
+
+        <label for="header">Does the file have a header?</label><br>
+        <select id="header" name="header">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+        </select><br><br>
+
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if info %}
+    <!-- Dataset Info -->
+    <div class="card">
+        <h3>Dataset Info</h3>
+        <p>Rows: {{ info.rows }}</p>
+        <p>Columns: {{ info.cols }}</p>
+        <p>Duplicate Rows: {{ info.duplicate_rows }}</p>
+        <p>Duplicate Columns: {{ info.duplicate_columns }}</p>
+        <p>Total Missing Values: {{ info.missing_values }}</p>
+    </div>
+
+    <!-- Data Cleaning Buttons -->
+    <div class="card">
+        <h3>Data Cleaning</h3>
+        <form method="POST">
+            <button type="submit" name="action" value="remove_duplicates">Remove Duplicate Rows</button>
+            <button type="submit" name="action" value="remove_dup_columns">Remove Duplicate Columns</button>
+            <button type="submit" name="action" value="remove_missing">Remove Rows with Missing Values</button>
+        </form>
+
+        <!-- Preview Switches -->
+        <div class="switches">
+            <label><input type="checkbox" id="toggle-dup-rows"> Preview Duplicate Rows</label>
+            <label><input type="checkbox" id="toggle-dup-cols"> Preview Duplicate Columns</label>
+            <label><input type="checkbox" id="toggle-missing"> Preview Rows with Missing Values</label>
+        </div>
+    </div>
+
+    <!-- Preview Tables -->
+    <div class="card preview-container" id="preview-dup-rows">
+        <h3>Duplicate Rows</h3>
+        {{ info.preview_rows | safe }}
+    </div>
+
+    <div class="card preview-container" id="preview-dup-cols">
+        <h3>Duplicate Columns</h3>
+        {{ info.preview_columns | safe }}
+    </div>
+
+    <div class="card preview-container" id="preview-missing">
+        <h3>Rows with Missing Values</h3>
+        {{ info.preview_missing | safe }}
+    </div>
+
+    <!-- Dataset Preview -->
+    <div class="card">
+        <h3>Preview Dataset</h3>
+        {{ info.preview | safe }}
+    </div>
+
+    <!-- Download Button -->
+    <div class="card">
+        <h3>Download Cleaned Data</h3>
+        <a href="/download" target="_blank" rel="noopener">
+            <button type="button">Download CSV</button>
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- About the Maker (Always Visible) -->
+    <div class="about-btn-container">
+        <button id="about-btn" class="about-btn">About the Maker</button>
+    </div>
+
+    <div id="about-modal" class="modal">
+        <img src="{{ url_for('static', filename='jamshid.jpg') }}" alt="Jamshid Farook" onerror="this.src='https://via.placeholder.com/120'">
+        <h3>Jamshid Farook</h3>
+        <p>Detail-oriented Data Analyst with hands-on experience in Python, SQL, Excel, and data visualization tools. IBM Data Analyst Certified with proven experience in dashboards, real-world datasets, and actionable insights.</p>
+        <p>
+            <a href="https://jamshidfarook.github.io/" target="_blank" rel="noopener">Portfolio</a> | 
+            <a href="https://www.linkedin.com/in/jamshidfarook" target="_blank" rel="noopener">LinkedIn</a>
+        </p>
+        <div class="modal-close-container">
+            <button id="close-modal" class="modal-close">Close</button>
+        </div>
+    </div>
+    <div id="modal-overlay" class="modal-overlay"></div>
+</div>
+
+<footer>
+    © 2026 Jamshid Farook — Data Cleaner App
+</footer>
+
+<script>
+// Toggle preview containers
+document.getElementById("toggle-dup-rows")?.addEventListener("change", function() {
+    document.getElementById("preview-dup-rows").style.display = this.checked ? "block" : "none";
+});
+document.getElementById("toggle-dup-cols")?.addEventListener("change", function() {
+    document.getElementById("preview-dup-cols").style.display = this.checked ? "block" : "none";
+});
+document.getElementById("toggle-missing")?.addEventListener("change", function() {
+    document.getElementById("preview-missing").style.display = this.checked ? "block" : "none";
+});
+
+// About the Maker Modal
+const aboutBtn = document.getElementById("about-btn");
+const modal = document.getElementById("about-modal");
+const overlay = document.getElementById("modal-overlay");
+const closeBtn = document.getElementById("close-modal");
+
+aboutBtn.addEventListener("click", () => {
+    modal.style.display = "block";
+    overlay.style.display = "block";
+});
+
+closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+    overlay.style.display = "none";
+});
+
+overlay.addEventListener("click", () => {
+    modal.style.display = "none";
+    overlay.style.display = "none";
+});
+</script>
+
+</body>
+</html>
